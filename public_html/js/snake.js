@@ -14,6 +14,12 @@ var context;
 var screenWidth;
 var screenHeight;
 
+var gameState;
+var gameOverMenu;
+var restartButton;
+var playHUD;
+var scoreboard;
+
 /* ------------------------------------------------------------------------------------------------------------------
  * Executing Game Code
  * ------------------------------------------------------------------------------------------------------------------
@@ -40,21 +46,40 @@ function gameInitialize() {
     canvas.width = screenWidth;
     canvas.height = screenHeight;
     document.addEventListener("keydown", keyboardHandler);
+
+    gameOverMenu = document.getElementById("gameOver");
+centerMenuPosition(gameOverMenu);
+
+restartButton = document.getElementById("restartButton");
+restartButton.addEventListener("click", gameRestart);
+
+playHUD = document.getElementById("playHUD");
+scoreboard = document.getElementById("scoreboard");
+ 
+setState("PLAY");
 }
 
 function gameLoop() {
     gameDraw();
-    snakeUpdate();
-    snakeDraw();
-    foodDraw();
+    if (gameState == "PLAY") {
+        snakeUpdate();
+        snakeDraw();
+        foodDraw();
+    }
 
 }
 
 
 function gameDraw() {
-    context.fillStyle = "rgb(5, 5, 5)";
+    context.fillStyle = "rgb(188, 141, 235)";
     context.fillRect(0, 0, screenWidth, screenHeight);
+}
 
+function gameRestart(){
+    snakeInitialize();
+    foodInitialize();
+    hideMenu(gameOverMenu);
+    setState("PLAY");
 }
 
 /* ------------------------------------------------------------------------------------------------------------------
@@ -80,7 +105,7 @@ function snakeInitialize() {
 
 function snakeDraw() {
     for (var index = 0; index < snake.length; index++) {
-        context.fillStyle = "blue";
+        context.fillStyle = "black";
         context.fillRect(snake[index].x * snakeSize, snake[index].y * snakeSize, snakeSize, snakeSize);
 
     }
@@ -105,6 +130,7 @@ function snakeUpdate() {
 
     checkFoodCollisions(snakeHeadX, snakeHeadY);
     checkWallCollisions(snakeHeadX, snakeHeadY);
+    checkSnakeCollisions(snakeHeadX , snakeHeadY);
 
     var snakeTail = snake.pop();
     snakeTail.x = snakeHeadX;
@@ -126,7 +152,7 @@ function foodInitialize() { //
 }
 
 function foodDraw() {
-    context.fillStyle = "blue";
+    context.fillStyle = "black";
     context.fillRect(food.x * snakeSize, food.y * snakeSize, snakeSize, snakeSize);
 }
 
@@ -171,12 +197,48 @@ function checkFoodCollisions(snakeHeadX, snakeHeadY) {
             y: 0
         });
         snakeLength++;
-setFoodPosition();
+        setFoodPosition();
     }
 }
 
 function checkWallCollisions(snakeHeadX, snakeHeadY) {
     if (snakeHeadX * snakeSize >= screenWidth || snakeHeadX * snakeSize < 0) {
-        console.log("Wall Collisions");
+        setState("GAME OVER");
     }
 }
+
+function checkSnakeCollisions(snakeHeadX , snakeHeadY){
+    for(var index = 1; index < snake.length; index++){
+        if(snakeHeadX == snake[index].x && snakeHeadY == snake[index].y){
+            seetState("GAME OVER");
+            return;
+        }
+    }
+}
+
+    /*-----------------------------------------------------------------------------------------------------------------------
+     * game State Handling
+     * ----------------------------------------------------------------------------------------------------------------------
+     */
+
+    function setState(state){
+        gameState = state;
+        showMenu(state);
+    }
+    
+    
+    function displayMenu(menu) {
+        menu.style.visibility = "visible";
+    }
+
+    function showMenu(state) {
+        if (state == "GAME OVER") {
+            displayMenu(gameOverMenu);
+        }
+    }
+
+    function centerMenuPosition(menu) {
+        menu.style.top = (screenHeight / 2) - (menu.offetHeight / 2) + "px";
+        menu.style.left = (screenWidth / 2) - (menu.offsetWidth / 2) + "px";
+    }
+    
